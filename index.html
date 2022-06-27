@@ -18,6 +18,9 @@
     </style>
   </head>
   <body>
+    <input type="file" id="image" name="filename" />
+    <img id="output" />
+
     <script type="text/javascript" src="build/wasm_exec.js"></script>
     <script>
       function loadAndInitWA(waURL) {
@@ -35,6 +38,19 @@
       }
 
       loadAndInitWA("build/main.wasm");
+
+      document.getElementById('image').addEventListener('change', () => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          // Converting the image to Unit8Array
+          const arrayBuffer = new Uint8Array(e.target.result);
+          analyze(arrayBuffer);
+        }
+
+        reader.readAsArrayBuffer(event.target.files[0]);
+      }
+    );
     </script>
   </body>
 </html>
