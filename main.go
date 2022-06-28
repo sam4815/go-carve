@@ -8,13 +8,12 @@ import (
 	"log"
 	"syscall/js"
 
-	"image/color"
 	"image/draw"
 	"image/jpeg"
 	_ "image/png"
 )
 
-func setImgSrc(img image.Image) {
+func setImage(img image.Image) {
 	doc := js.Global().Get("document")
 	imageEl := doc.Call("getElementById", "output")
 
@@ -35,7 +34,7 @@ func analyze(this js.Value, inputs []js.Value) interface{} {
 		log.Println(err)
 		return nil
 	}
-	bounds := img.Bounds()
+	// bounds := img.Bounds()
 
 	rgba, ok := img.(*image.RGBA)
 	if !ok {
@@ -44,14 +43,15 @@ func analyze(this js.Value, inputs []js.Value) interface{} {
 		draw.Draw(rgba, rgba.Bounds(), img, b.Min, draw.Src)
 	}
 
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			// r, g, b, a := img.At(x, y).RGBA()
-			rgba.Set(x, y, color.RGBA{85, 165, 34, 255})
-		}
-	}
+	// for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+	// 	for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	// 		r, g, b, a := img.At(x, y).RGBA()
+	// 		avg := uint8((r + g + b) / 3)
+	// 		rgba.Set(x, y, color.RGBA{avg, avg, avg, uint8(a)})
+	// 	}
+	// }
 
-	setImgSrc(rgba)
+	setImage(rgba)
 
 	return imageArr
 }
