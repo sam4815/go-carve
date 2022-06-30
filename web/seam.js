@@ -3,9 +3,17 @@ const heightRangeEl = document.getElementById("height-range");
 const imageEl = document.getElementById("output");
 const overlayEl = document.getElementById("overlay");
 
+const setImgSrcFromBuffer = (buffer) => {
+  const base64String = btoa(
+    new Uint8Array(buffer)
+      .reduce((data, byte) => data + String.fromCharCode(byte), '')
+  );
+  imageEl.src = `data:image/jpeg;base64,${base64String}`;
+}
+
 const onBufferLoad = (buffer) => {
   const arrayBuffer = new Uint8Array(buffer.target.result);
-  analyze(arrayBuffer);
+  setImgSrcFromBuffer(arrayBuffer);
 };
 
 const readFile = (event) => {
@@ -44,7 +52,9 @@ const updateOverlay = () => {
 };
 
 const onClickCarve = () => {
-  // CARVE
+  const src = imageEl.src.split(',')[1];
+  const output = goCarve(src);
+  imageEl.src = `data:image/jpeg;base64,${output}`;
 };
 
 const onClickDownload = () => {
@@ -59,7 +69,7 @@ const initialize = () =>
     .then((r) => r.arrayBuffer())
     .then((buffer) => {
       const arrayBuffer = new Uint8Array(buffer);
-      analyze(arrayBuffer);
+      setImgSrcFromBuffer(arrayBuffer);
     });
 
 const loadAndInitWA = (waURL) => {
