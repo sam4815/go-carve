@@ -1,5 +1,6 @@
 body {
   min-height: 100vh;
+  min-width: 320px;
   display: flex;
   color: #0f3c4b;
   background-color: #e5edf1;
