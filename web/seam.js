@@ -65,7 +65,7 @@ const onClickDownload = () => {
 };
 
 const initialize = () =>
-  fetch("./dali.jpeg")
+  fetch("./assets/dali.jpeg")
     .then((r) => r.arrayBuffer())
     .then((buffer) => {
       const arrayBuffer = new Uint8Array(buffer);
