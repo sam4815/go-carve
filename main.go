@@ -62,7 +62,7 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	sX := [9]float64{-1, -2, -1, 0, 0, 0, 1, 2, 1}
 	sY := [9]float64{-1, 0, 1, -2, 0, 2, -1, 0, 1}
 
-	// Result matrix
+	// Array to store edge values
 	edgeDetectionImg := make([]float64, imgY*imgX)
 	edgeMax := 0.0
 
@@ -88,10 +88,43 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 
 	log.Println("Calculated edges")
 
+	// Array to store cost values
+	costImg := make([]float64, imgY*imgX+1)
+	costMax := 0.0
+
+	for y := imgY - 1; y >= 0; y-- {
+		for x := 0; x < imgX; x++ {
+			currentPixelCost := edgeDetectionImg[x+y*imgX]
+			// Handle final row
+			if y == imgY-1 {
+				costImg[x+y*imgX] = currentPixelCost
+				continue
+			}
+
+			rowIdx := (y + 1) * imgX
+			leftPixelCost, midPixelCost, rightPixelCost := costImg[x-1+rowIdx], costImg[x+rowIdx], costImg[x+1+rowIdx]
+
+			if x == 0 {
+				leftPixelCost = math.Inf(1)
+			} else if x == imgX-1 {
+				rightPixelCost = math.Inf(1)
+			}
+
+			minCost := math.Min(math.Min(leftPixelCost, midPixelCost), rightPixelCost)
+
+			cost := minCost + currentPixelCost
+			costMax = math.Max(cost, costMax)
+
+			costImg[x+imgX*y] = cost
+		}
+	}
+
+	log.Println("Calculated costs")
+
 	// Convert the pixel array back to an image
 	for y := 0; y < imgY; y++ {
 		for x := 0; x < imgX; x++ {
-			pixel := uint8((edgeDetectionImg[x+y*imgX] / edgeMax) * 255)
+			pixel := uint8((costImg[x+y*imgX] / costMax) * 255)
 			rgba.Set(x, y, color.RGBA{pixel, pixel, pixel, 1})
 		}
 	}
