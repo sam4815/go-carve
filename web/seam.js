@@ -26,8 +26,8 @@ const readFile = (event) => {
 };
 
 const setRanges = () => {
-  widthRangeEl.value = 50;
-  heightRangeEl.value = 50;
+  widthRangeEl.value = 0;
+  heightRangeEl.value = 0;
   widthRangeEl.max = Math.round(imageEl.naturalWidth) - 100;
   heightRangeEl.max = Math.round(imageEl.naturalHeight) - 100;
   updateOverlay();
