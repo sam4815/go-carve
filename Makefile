@@ -1,3 +1,4 @@
+.PHONY: web
 web:
 	mkdir -p build
 	cp $(shell go env GOROOT)/misc/wasm/wasm_exec.js build/
