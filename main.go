@@ -8,6 +8,7 @@ import (
 	"math"
 	"syscall/js"
 
+	"image/color"
 	"image/draw"
 	"image/jpeg"
 	_ "image/png"
@@ -50,25 +51,27 @@ func calculateSeam(costs []float64, rows int, cols int) []int {
 	return seam
 }
 
-func removeSeam(costs *[]float64, img *image.RGBA, rows int, cols int, seam []int) {
+func removeSeam(costs *[]float64, pixels *[]color.Color, rows int, cols int, seam []int) {
 	for y := 0; y < rows; y++ {
 		skippedColIdx := seam[y]
+
 		for x := skippedColIdx; x < cols-1; x++ {
 			(*costs)[x+(y*cols)] = (*costs)[x+1+(y*cols)]
-			pixel := img.At(x+1, y)
-			img.Set(x, y, pixel)
+			(*pixels)[x+(y*cols)] = (*pixels)[x+1+(y*cols)]
 		}
+
 		(*costs)[cols-1+(y*cols)] = math.Inf(1)
 	}
 }
 
-func drawImage(src *image.RGBA, rows int, cols int, pixels []float64) *image.RGBA {
+func drawImage(src *image.RGBA, rows int, cols int, pixels []color.Color) *image.RGBA {
+	srcX := src.Bounds().Max.X
 	rect := image.Rect(0, 0, cols, rows)
 	dst := image.NewRGBA(rect)
 
 	for y := 0; y < rows; y++ {
 		for x := 0; x < cols; x++ {
-			pixel := src.At(x, y)
+			pixel := pixels[x+y*srcX]
 			dst.Set(x, y, pixel)
 		}
 	}
@@ -103,6 +106,7 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	imgX, imgY := bounds.Max.X, bounds.Max.Y
 	paddedX, paddedY := bounds.Max.X+2, bounds.Max.Y+2
 	paddedImg := make([]float64, paddedX*paddedY)
+	imgMatrix := make([]color.Color, imgX*imgY)
 
 	// Calculate grayscale pixel and copy to padded image
 	for y := 0; y < paddedY; y++ {
@@ -112,10 +116,12 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 				continue
 			}
 
-			r, g, b, _ := img.At(x-1, y-1).RGBA()
+			originalPixel := img.At(x-1, y-1)
+			r, g, b, _ := originalPixel.RGBA()
 			grey := float64(r)*0.299 + float64(g)*0.587 + float64(b)*0.114
 			pixel := uint8(grey / 256)
 			paddedImg[x+(paddedX*y)] = float64(pixel)
+			imgMatrix[x-1+(imgX*(y-1))] = originalPixel
 		}
 	}
 	log.Println("Converted to grayscale")
@@ -184,14 +190,14 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	log.Println("Calculated costs")
 
 	// Calculate and remove seams
-	for i := 0; i < 200; i++ {
+	for i := 0; i < 50; i++ {
 		seam := calculateSeam(costImg, imgY, imgX)
-		removeSeam(&costImg, rgba, imgY, imgX, seam)
+		removeSeam(&costImg, &imgMatrix, imgY, imgX, seam)
 	}
 
 	log.Println("Removed seams")
 
-	final := drawImage(rgba, imgY, imgX-200, costImg)
+	final := drawImage(rgba, imgY, imgX-50, imgMatrix)
 
 	var buff bytes.Buffer
 	jpeg.Encode(&buff, final, nil)
