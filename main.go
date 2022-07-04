@@ -42,6 +42,14 @@ func (matrix matrix[T]) ForEach(lambda func(x int, y int)) {
 	}
 }
 
+func (matrix matrix[T]) RotateRight() {
+	// Rotate by 90
+}
+
+func (matrix matrix[T]) RotateLeft() {
+	// Rotate by -90
+}
+
 func generatePaddedGrayscale(src matrix[color.Color]) matrix[float64] {
 	paddedX, paddedY := src.cols+2, src.rows+2
 	paddedMatrix := createMatrix[float64](paddedY, paddedX)
@@ -156,16 +164,16 @@ func calculateSeam(src matrix[float64]) []int {
 	return seam
 }
 
-func removeSeam(seam []int, costs *matrix[float64], pixels *matrix[color.Color]) {
-	for y := 0; y < costs.rows; y++ {
-		for x := seam[y]; x < costs.cols-1; x++ {
-			costs.Set(x, y, costs.At(x+1, y))
-			pixels.Set(x, y, pixels.At(x+1, y))
+func removeSeamFromImgs(seam []int, paddedImg *matrix[float64], colorImg *matrix[color.Color]) {
+	for y := 0; y < colorImg.rows; y++ {
+		for x := seam[y]; x < colorImg.cols-1; x++ {
+			colorImg.Set(x, y, colorImg.At(x+1, y))
+			paddedImg.Set(x+1, y+1, paddedImg.At(x+2, y))
 		}
 	}
 
-	costs.cols = costs.cols - 1
-	pixels.cols = pixels.cols - 1
+	paddedImg.cols = paddedImg.cols - 1
+	colorImg.cols = colorImg.cols - 1
 }
 
 func drawGrayscaleImage(pixels matrix[float64]) *image.RGBA {
@@ -199,6 +207,7 @@ func drawColorImage(pixels matrix[color.Color]) *image.RGBA {
 
 func carve(this js.Value, inputs []js.Value) interface{} {
 	srcBytes, err := base64.StdEncoding.DecodeString(inputs[0].String())
+	_, dstCols := inputs[1].Int(), inputs[2].Int()
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -222,13 +231,20 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 		imgMatrix.Set(x, y, img.At(x, y))
 	})
 
-	paddedGrayscale := generatePaddedGrayscale(imgMatrix)
-	edgeCosts := calculateEdgeCosts(paddedGrayscale)
-	costPaths := calculateCostPaths(edgeCosts)
+	numXSeams := imgX - dstCols
+	log.Println("Removing ", numXSeams, " vertical seams")
+	// numYSeams := imgY - dstRows
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < numXSeams; i++ {
+		paddedGrayscale := generatePaddedGrayscale(imgMatrix)
+		edgeCosts := calculateEdgeCosts(paddedGrayscale)
+		costPaths := calculateCostPaths(edgeCosts)
 		seam := calculateSeam(costPaths)
-		removeSeam(seam, &costPaths, &imgMatrix)
+		removeSeamFromImgs(seam, &paddedGrayscale, &imgMatrix)
+
+		if (i+1)%20 == 0 {
+			log.Println(i+1, " seams removed")
+		}
 	}
 
 	final := drawColorImage(imgMatrix)
