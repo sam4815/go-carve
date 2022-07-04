@@ -53,7 +53,9 @@ const updateOverlay = () => {
 
 const onClickCarve = () => {
   const src = imageEl.src.split(',')[1];
-  const output = goCarve(src);
+  const targetHeight = imageEl.naturalHeight - heightRangeEl.value;
+  const targetWidth = imageEl.naturalWidth - widthRangeEl.value;
+  const output = goCarve(src, targetHeight, targetWidth);
   imageEl.src = `data:image/jpeg;base64,${output}`;
 };
 
