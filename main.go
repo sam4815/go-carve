@@ -99,15 +99,16 @@ func calculateEdgeCosts(src matrix[float64]) matrix[float64] {
 	return edgeMatrix
 }
 
-func calculateCostPaths(costs matrix[float64]) matrix[float64] {
-	costPaths := createMatrix[float64](costs.rows, costs.cols)
+func calculateCostPaths(costs matrix[float64], paths *matrix[float64]) {
+	paths.cols = costs.cols
+	paths.rows = costs.rows
 
 	for y := costs.rows - 1; y >= 0; y-- {
 		for x := 0; x < costs.cols; x++ {
 			currentPixelCost := costs.At(x, y)
 			// Handle final row
 			if y == costs.rows-1 {
-				costPaths.Set(x, y, currentPixelCost)
+				paths.Set(x, y, currentPixelCost)
 				continue
 			}
 
@@ -118,14 +119,12 @@ func calculateCostPaths(costs matrix[float64]) matrix[float64] {
 				rightPixelIndex = costs.cols - 1
 			}
 
-			minCost := math.Min(math.Min(costPaths.At(leftPixelIndex, y+1), costPaths.At(midPixelIndex, y+1)), costPaths.At(rightPixelIndex, y+1))
+			minCost := math.Min(math.Min(paths.At(leftPixelIndex, y+1), paths.At(midPixelIndex, y+1)), paths.At(rightPixelIndex, y+1))
 			cost := minCost + currentPixelCost
 
-			costPaths.Set(x, y, cost)
+			paths.Set(x, y, cost)
 		}
 	}
-
-	return costPaths
 }
 
 func calculateSeam(src matrix[float64]) []int {
@@ -164,16 +163,16 @@ func calculateSeam(src matrix[float64]) []int {
 	return seam
 }
 
-func removeSeamFromImgs(seam []int, paddedImg *matrix[float64], colorImg *matrix[color.Color]) {
+func removeSeam(seam []int, costs *matrix[float64], colorImg *matrix[color.Color]) {
 	for y := 0; y < colorImg.rows; y++ {
 		for x := seam[y]; x < colorImg.cols-1; x++ {
 			colorImg.Set(x, y, colorImg.At(x+1, y))
-			paddedImg.Set(x+1, y+1, paddedImg.At(x+2, y))
+			costs.Set(x, y, costs.At(x+1, y))
 		}
 	}
 
-	paddedImg.cols = paddedImg.cols - 1
 	colorImg.cols = colorImg.cols - 1
+	costs.cols = costs.cols - 1
 }
 
 func drawGrayscaleImage(pixels matrix[float64]) *image.RGBA {
@@ -235,14 +234,16 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	log.Println("Removing ", numXSeams, " vertical seams")
 	// numYSeams := imgY - dstRows
 
-	for i := 0; i < numXSeams; i++ {
-		paddedGrayscale := generatePaddedGrayscale(imgMatrix)
-		edgeCosts := calculateEdgeCosts(paddedGrayscale)
-		costPaths := calculateCostPaths(edgeCosts)
-		seam := calculateSeam(costPaths)
-		removeSeamFromImgs(seam, &paddedGrayscale, &imgMatrix)
+	paddedGrayscale := generatePaddedGrayscale(imgMatrix)
+	edgeCosts := calculateEdgeCosts(paddedGrayscale)
+	costPaths := createMatrix[float64](edgeCosts.rows, edgeCosts.cols)
 
-		if (i+1)%20 == 0 {
+	for i := 0; i < numXSeams; i++ {
+		calculateCostPaths(edgeCosts, &costPaths)
+		seam := calculateSeam(costPaths)
+		removeSeam(seam, &edgeCosts, &imgMatrix)
+
+		if (i+1)%50 == 0 {
 			log.Println(i+1, " seams removed")
 		}
 	}
