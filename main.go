@@ -42,12 +42,39 @@ func (matrix matrix[T]) ForEach(lambda func(x int, y int)) {
 	}
 }
 
-func (matrix matrix[T]) RotateRight() {
-	// Rotate by 90
+func (matrix *matrix[T]) Transpose() {
+	vals := make([]T, matrix.rows*matrix.cols)
+
+	// Transpose the matrix
+	for y := 0; y < matrix.rows; y++ {
+		for x := 0; x < matrix.cols; x++ {
+			vals[y+x*matrix.rows] = matrix.vals[x+y*matrix.initCols]
+		}
+	}
+
+	matrix.vals = vals
+	matrix.rows, matrix.cols, matrix.initCols = matrix.cols, matrix.rows, matrix.rows
 }
 
-func (matrix matrix[T]) RotateLeft() {
-	// Rotate by -90
+func (matrix *matrix[T]) FlipVertical() {
+	for y := 0; y < matrix.rows/2; y++ {
+		upperRowIndex := y * matrix.initCols
+		lowerRowIndex := (matrix.rows - y - 1) * matrix.initCols
+
+		for x := 0; x < matrix.cols; x++ {
+			matrix.vals[x+upperRowIndex], matrix.vals[x+lowerRowIndex] = matrix.vals[x+lowerRowIndex], matrix.vals[x+upperRowIndex]
+		}
+	}
+}
+
+func (matrix *matrix[T]) RotateRight() {
+	matrix.FlipVertical()
+	matrix.Transpose()
+}
+
+func (matrix *matrix[T]) RotateLeft() {
+	matrix.Transpose()
+	matrix.FlipVertical()
 }
 
 func generatePaddedGrayscale(src matrix[color.Color]) matrix[float64] {
@@ -100,8 +127,7 @@ func calculateEdgeCosts(src matrix[float64]) matrix[float64] {
 }
 
 func calculateCostPaths(costs matrix[float64], paths *matrix[float64]) {
-	paths.cols = costs.cols
-	paths.rows = costs.rows
+	paths.rows, paths.cols, paths.initCols = costs.rows, costs.cols, costs.initCols
 
 	for y := costs.rows - 1; y >= 0; y-- {
 		for x := 0; x < costs.cols; x++ {
@@ -206,7 +232,7 @@ func drawColorImage(pixels matrix[color.Color]) *image.RGBA {
 
 func carve(this js.Value, inputs []js.Value) interface{} {
 	srcBytes, err := base64.StdEncoding.DecodeString(inputs[0].String())
-	_, dstCols := inputs[1].Int(), inputs[2].Int()
+	dstRows, dstCols := inputs[1].Int(), inputs[2].Int()
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -231,8 +257,8 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	})
 
 	numXSeams := imgX - dstCols
-	log.Println("Removing ", numXSeams, " vertical seams")
-	// numYSeams := imgY - dstRows
+	numYSeams := imgY - dstRows
+	log.Println("Removing ", numXSeams, " vertical seams and ", numYSeams, " horizontal seams.")
 
 	paddedGrayscale := generatePaddedGrayscale(imgMatrix)
 	edgeCosts := calculateEdgeCosts(paddedGrayscale)
@@ -244,8 +270,25 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 		removeSeam(seam, &edgeCosts, &imgMatrix)
 
 		if (i+1)%50 == 0 {
-			log.Println(i+1, " seams removed")
+			log.Println(i+1, " vertical seams removed")
 		}
+	}
+
+	if numYSeams > 0 {
+		edgeCosts.RotateRight()
+		imgMatrix.RotateRight()
+
+		for i := 0; i < numYSeams; i++ {
+			calculateCostPaths(edgeCosts, &costPaths)
+			seam := calculateSeam(costPaths)
+			removeSeam(seam, &edgeCosts, &imgMatrix)
+
+			if (i+1)%50 == 0 {
+				log.Println(i+1, " horizontal seams removed")
+			}
+		}
+
+		imgMatrix.RotateLeft()
 	}
 
 	final := drawColorImage(imgMatrix)
