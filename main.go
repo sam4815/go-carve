@@ -126,7 +126,7 @@ func calculateEdgeCosts(src matrix[float64]) matrix[float64] {
 	return edgeMatrix
 }
 
-func calculateCostPaths(costs matrix[float64], paths *matrix[float64]) {
+func calculateCostPaths(costs *matrix[float64], paths *matrix[float64]) {
 	paths.rows, paths.cols, paths.initCols = costs.rows, costs.cols, costs.initCols
 
 	for y := costs.rows - 1; y >= 0; y-- {
@@ -153,7 +153,7 @@ func calculateCostPaths(costs matrix[float64], paths *matrix[float64]) {
 	}
 }
 
-func calculateSeam(src matrix[float64]) []int {
+func calculateSeam(src *matrix[float64]) []int {
 	seam := make([]int, src.rows)
 	minStart := math.Inf(1)
 	for x := 0; x < src.cols; x++ {
@@ -230,9 +230,21 @@ func drawColorImage(pixels matrix[color.Color]) *image.RGBA {
 	return dst
 }
 
-func carve(this js.Value, inputs []js.Value) interface{} {
-	srcBytes, err := base64.StdEncoding.DecodeString(inputs[0].String())
-	dstRows, dstCols := inputs[1].Int(), inputs[2].Int()
+func convertImageToMatrix(image image.Image) matrix[color.Color] {
+	bounds := image.Bounds()
+	imgX, imgY := bounds.Max.X, bounds.Max.Y
+
+	imageMatrix := createMatrix[color.Color](imgY, imgX)
+
+	imageMatrix.ForEach(func(x int, y int) {
+		imageMatrix.Set(x, y, image.At(x, y))
+	})
+
+	return imageMatrix
+}
+
+func readBase64Image(src string) image.Image {
+	srcBytes, err := base64.StdEncoding.DecodeString(src)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -245,61 +257,77 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 		return nil
 	}
 
-	bounds := img.Bounds()
+	return img
+}
 
-	// Create slice to store image pixels
-	// Operating on this slice is much faster than
-	// using image.Image At/Set methods
-	imgX, imgY := bounds.Max.X, bounds.Max.Y
-	imgMatrix := createMatrix[color.Color](imgY, imgX)
-	imgMatrix.ForEach(func(x int, y int) {
-		imgMatrix.Set(x, y, img.At(x, y))
-	})
+func encodeAsJPEGString(src image.Image) string {
+	var buffer bytes.Buffer
+	jpeg.Encode(&buffer, src, nil)
 
-	numXSeams := imgX - dstCols
-	numYSeams := imgY - dstRows
+	return base64.StdEncoding.EncodeToString(buffer.Bytes())
+}
+
+func detectEdges(this js.Value, inputs []js.Value) interface{} {
+	imageMatrix := convertImageToMatrix(readBase64Image(inputs[0].String()))
+	paddedGrayscale := generatePaddedGrayscale(imageMatrix)
+	edgeCosts := calculateEdgeCosts(paddedGrayscale)
+
+	return encodeAsJPEGString(drawGrayscaleImage(edgeCosts))
+}
+
+func calculatePaths(this js.Value, inputs []js.Value) interface{} {
+	imageMatrix := convertImageToMatrix(readBase64Image(inputs[0].String()))
+	paddedGrayscale := generatePaddedGrayscale(imageMatrix)
+	edgeCosts := calculateEdgeCosts(paddedGrayscale)
+	costPaths := createMatrix[float64](edgeCosts.rows, edgeCosts.cols)
+	calculateCostPaths(&edgeCosts, &costPaths)
+
+	return encodeAsJPEGString(drawGrayscaleImage(costPaths))
+}
+
+func removeSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCosts *matrix[float64], costPaths *matrix[float64]) {
+	for i := 0; i < numSeams; i++ {
+		calculateCostPaths(edgeCosts, costPaths)
+		seam := calculateSeam(costPaths)
+		removeSeam(seam, edgeCosts, imageMatrix)
+
+		if (i+1)%50 == 0 {
+			log.Println(i+1, " seams removed")
+		}
+	}
+}
+
+func carve(this js.Value, inputs []js.Value) interface{} {
+	image := readBase64Image(inputs[0].String())
+	imageMatrix := convertImageToMatrix(image)
+
+	dstRows, dstCols := inputs[1].Int(), inputs[2].Int()
+	numXSeams := imageMatrix.cols - dstCols
+	numYSeams := imageMatrix.rows - dstRows
+
 	log.Println("Removing ", numXSeams, " vertical seams and ", numYSeams, " horizontal seams.")
 
-	paddedGrayscale := generatePaddedGrayscale(imgMatrix)
+	paddedGrayscale := generatePaddedGrayscale(imageMatrix)
 	edgeCosts := calculateEdgeCosts(paddedGrayscale)
 	costPaths := createMatrix[float64](edgeCosts.rows, edgeCosts.cols)
 
-	for i := 0; i < numXSeams; i++ {
-		calculateCostPaths(edgeCosts, &costPaths)
-		seam := calculateSeam(costPaths)
-		removeSeam(seam, &edgeCosts, &imgMatrix)
-
-		if (i+1)%50 == 0 {
-			log.Println(i+1, " vertical seams removed")
-		}
-	}
+	removeSeams(numXSeams, &imageMatrix, &edgeCosts, &costPaths)
 
 	if numYSeams > 0 {
 		edgeCosts.RotateRight()
-		imgMatrix.RotateRight()
+		imageMatrix.RotateRight()
 
-		for i := 0; i < numYSeams; i++ {
-			calculateCostPaths(edgeCosts, &costPaths)
-			seam := calculateSeam(costPaths)
-			removeSeam(seam, &edgeCosts, &imgMatrix)
+		removeSeams(numYSeams, &imageMatrix, &edgeCosts, &costPaths)
 
-			if (i+1)%50 == 0 {
-				log.Println(i+1, " horizontal seams removed")
-			}
-		}
-
-		imgMatrix.RotateLeft()
+		imageMatrix.RotateLeft()
 	}
 
-	final := drawColorImage(imgMatrix)
-
-	var buff bytes.Buffer
-	jpeg.Encode(&buff, final, nil)
-
-	return base64.StdEncoding.EncodeToString(buff.Bytes())
+	return encodeAsJPEGString(drawColorImage(imageMatrix))
 }
 
 func main() {
 	js.Global().Set("goCarve", js.FuncOf(carve))
+	js.Global().Set("goDetectEdges", js.FuncOf(detectEdges))
+	js.Global().Set("goCalculatePaths", js.FuncOf(calculatePaths))
 	select {}
 }
