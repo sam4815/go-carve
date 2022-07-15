@@ -2,16 +2,19 @@
 <html>
   <head>
     <link rel="shortcut icon" type="image/x-icon" href="assets/favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;500&display=swap"
+      rel="stylesheet"
+    />
     <meta charset="utf-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>seam carving</title>
-    <link rel="stylesheet" href="seam.css">
+    <link rel="stylesheet" href="seam.css" />
   </head>
   <body>
     <div class="actions">
@@ -23,8 +26,16 @@
         <img class="icon" src="assets/download.png" />
         <span class="button-text">Download</span>
       </div>
-      <div class="button upload-container" onclick="document.getElementById('image-upload').click()">
-        <input type="file" accept="image/*" id="image-upload" onchange="readFile(event)" name="filename" style="display:none" />
+      <div
+        class="button upload-container"
+        onclick="document.getElementById('image-upload').click()"
+      >
+        <input
+          type="file"
+          accept="image/*"
+          id="image-upload"
+          onchange="readFile(event)"
+        />
         <img class="icon" src="assets/upload.png" />
         <span class="button-text">Upload</span>
       </div>
@@ -34,8 +45,24 @@
         <div id="overlay"></div>
         <img onload="setRanges()" id="output" />
       </div>
-      <input type="range" min="0" max="100" value="0" oninput="updateOverlay()" class="slider" id="height-range">
-      <input type="range" min="0" max="100" value="0" oninput="updateOverlay()" class="slider" id="width-range">
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        oninput="updateOverlay()"
+        class="slider"
+        id="height-range"
+      />
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+        oninput="updateOverlay()"
+        class="slider"
+        id="width-range"
+      />
     </div>
 
     <script type="text/javascript" src="wasm_exec.js"></script>

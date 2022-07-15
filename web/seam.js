@@ -5,11 +5,13 @@ const overlayEl = document.getElementById("overlay");
 
 const setImgSrcFromBuffer = (buffer) => {
   const base64String = btoa(
-    new Uint8Array(buffer)
-      .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    new Uint8Array(buffer).reduce(
+      (data, byte) => data + String.fromCharCode(byte),
+      ""
+    )
   );
   imageEl.src = `data:image/jpeg;base64,${base64String}`;
-}
+};
 
 const onBufferLoad = (buffer) => {
   const arrayBuffer = new Uint8Array(buffer.target.result);
@@ -52,7 +54,7 @@ const updateOverlay = () => {
 };
 
 const onClickCarve = () => {
-  const src = imageEl.src.split(',')[1];
+  const src = imageEl.src.split(",")[1];
   const targetHeight = imageEl.naturalHeight - heightRangeEl.value;
   const targetWidth = imageEl.naturalWidth - widthRangeEl.value;
   const output = goCarve(src, targetHeight, targetWidth);
