@@ -2,42 +2,74 @@
 <html>
   <head>
     <link rel="shortcut icon" type="image/x-icon" href="assets/favicon.ico" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;500&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;500&display=swap"
+      rel="stylesheet"
+    />
     <meta charset="utf-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1"
     />
     <title>seam carving</title>
-    <link rel="stylesheet" href="seam.css">
+    <link rel="stylesheet" href="seam.css" />
   </head>
   <body>
     <div class="actions">
-      <div class="button" onclick="onClickCarve()">
+      <button class="button" onclick="onClickCarve()">
         <img class="icon" src="assets/scissors.png" />
         <span class="button-text">Carve</span>
-      </div>
-      <div class="button" onclick="onClickDownload()">
+      </button>
+      <button class="button" onclick="onClickDownload()">
         <img class="icon" src="assets/download.png" />
         <span class="button-text">Download</span>
-      </div>
-      <div class="button upload-container" onclick="document.getElementById('image-upload').click()">
-        <input type="file" accept="image/*" id="image-upload" onchange="readFile(event)" name="filename" style="display:none" />
+      </button>
+      <button
+        class="button upload-container"
+        onclick="document.getElementById('image-upload').click()"
+      >
+        <input
+          type="file"
+          accept="image/*"
+          id="image-upload"
+          onchange="readFile(event)"
+        />
         <img class="icon" src="assets/upload.png" />
         <span class="button-text">Upload</span>
-      </div>
+      </button>
     </div>
-    <div class="resize-container">
+    <div class="images-container">
+      <div class="resize-container">
+        <div class="input-container">
+          <div id="overlay"></div>
+          <img onload="setRanges()" id="input" />
+        </div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          oninput="updateOverlay()"
+          class="slider"
+          id="height-range"
+          orient="vertical"
+        />
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value="0"
+          oninput="updateOverlay()"
+          class="slider"
+          id="width-range"
+        />
+      </div>
       <div class="output-container">
-        <div id="overlay"></div>
-        <img onload="setRanges()" id="output" />
+        <img id="output" />
       </div>
-      <input type="range" min="0" max="100" value="0" oninput="updateOverlay()" class="slider" id="height-range">
-      <input type="range" min="0" max="100" value="0" oninput="updateOverlay()" class="slider" id="width-range">
     </div>
-
     <script type="text/javascript" src="wasm_exec.js"></script>
     <script type="text/javascript" src="seam.js"></script>
   </body>
