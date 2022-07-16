@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"image"
 	"log"
 	"math"
@@ -75,6 +76,13 @@ func (matrix *matrix[T]) RotateRight() {
 func (matrix *matrix[T]) RotateLeft() {
 	matrix.Transpose()
 	matrix.FlipVertical()
+}
+
+func setImSrc(base64String string) {
+	doc := js.Global().Get("document")
+	imageEl := doc.Call("getElementById", "output")
+
+	imageEl.Set("src", fmt.Sprintf("data:image/jpeg;base64,%s", base64String))
 }
 
 func generatePaddedGrayscale(src matrix[color.Color]) matrix[float64] {
@@ -218,7 +226,7 @@ func drawGrayscaleImage(pixels matrix[float64]) *image.RGBA {
 	return dst
 }
 
-func drawColorImage(pixels matrix[color.Color]) *image.RGBA {
+func drawColorImage(pixels *matrix[color.Color]) *image.RGBA {
 	rect := image.Rect(0, 0, pixels.cols, pixels.rows)
 	dst := image.NewRGBA(rect)
 
@@ -285,16 +293,26 @@ func calculatePaths(this js.Value, inputs []js.Value) interface{} {
 	return encodeAsJPEGString(drawGrayscaleImage(costPaths))
 }
 
-func removeSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCosts *matrix[float64], costPaths *matrix[float64]) {
+func removeVerticalSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCosts *matrix[float64], costPaths *matrix[float64]) {
 	for i := 0; i < numSeams; i++ {
 		calculateCostPaths(edgeCosts, costPaths)
 		seam := calculateSeam(costPaths)
 		removeSeam(seam, edgeCosts, imageMatrix)
 
 		if (i+1)%50 == 0 {
-			log.Println(i+1, " seams removed")
+			// log.Println(i+1, " seams removed")
+			setImSrc(encodeAsJPEGString(drawColorImage(imageMatrix)))
 		}
 	}
+}
+
+func removeHorizontalSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCosts *matrix[float64], costPaths *matrix[float64]) {
+	edgeCosts.RotateRight()
+	imageMatrix.RotateRight()
+
+	removeVerticalSeams(numSeams, imageMatrix, edgeCosts, costPaths)
+
+	imageMatrix.RotateLeft()
 }
 
 func carve(this js.Value, inputs []js.Value) interface{} {
@@ -311,18 +329,14 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	edgeCosts := calculateEdgeCosts(paddedGrayscale)
 	costPaths := createMatrix[float64](edgeCosts.rows, edgeCosts.cols)
 
-	removeSeams(numXSeams, &imageMatrix, &edgeCosts, &costPaths)
+	removeVerticalSeams(numXSeams, &imageMatrix, &edgeCosts, &costPaths)
+	removeHorizontalSeams(numYSeams, &imageMatrix, &edgeCosts, &costPaths)
 
-	if numYSeams > 0 {
-		edgeCosts.RotateRight()
-		imageMatrix.RotateRight()
+	carvedImage := drawColorImage(&imageMatrix)
+	carvedImageBase64 := encodeAsJPEGString(carvedImage)
 
-		removeSeams(numYSeams, &imageMatrix, &edgeCosts, &costPaths)
-
-		imageMatrix.RotateLeft()
-	}
-
-	return encodeAsJPEGString(drawColorImage(imageMatrix))
+	setImSrc(carvedImageBase64)
+	return carvedImageBase64
 }
 
 func main() {

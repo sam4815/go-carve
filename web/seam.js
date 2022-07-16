@@ -1,6 +1,7 @@
 const widthRangeEl = document.getElementById("width-range");
 const heightRangeEl = document.getElementById("height-range");
-const imageEl = document.getElementById("output");
+const inputImageEl = document.getElementById("input");
+const outputImageEl = document.getElementById("output");
 const overlayEl = document.getElementById("overlay");
 
 const setImgSrcFromBuffer = (buffer) => {
@@ -10,7 +11,9 @@ const setImgSrcFromBuffer = (buffer) => {
       ""
     )
   );
-  imageEl.src = `data:image/jpeg;base64,${base64String}`;
+  inputImageEl.src = `data:image/jpeg;base64,${base64String}`;
+  outputImageEl.src = `data:image/jpeg;base64,${base64String}`;
+  outputImageEl.style.height = "unset";
 };
 
 const onBufferLoad = (buffer) => {
@@ -30,17 +33,17 @@ const readFile = (event) => {
 const setRanges = () => {
   widthRangeEl.value = 0;
   heightRangeEl.value = 0;
-  widthRangeEl.max = Math.round(imageEl.naturalWidth) - 100;
-  heightRangeEl.max = Math.round(imageEl.naturalHeight) - 100;
+  widthRangeEl.max = Math.round(inputImageEl.naturalWidth) - 100;
+  heightRangeEl.max = Math.round(inputImageEl.naturalHeight) - 100;
   updateOverlay();
 };
 
 const updateOverlay = () => {
-  const widthMax = imageEl.naturalWidth;
+  const widthMax = inputImageEl.naturalWidth;
   const widthValue = widthRangeEl.value;
   const widthPercent = ((widthValue / widthMax) * 100) / 2;
 
-  const heightMax = imageEl.naturalHeight;
+  const heightMax = inputImageEl.naturalHeight;
   const heightValue = heightRangeEl.value;
   const heightPercent = ((heightValue / heightMax) * 100) / 2;
 
@@ -54,26 +57,27 @@ const updateOverlay = () => {
 };
 
 const onClickCarve = () => {
-  const src = imageEl.src.split(",")[1];
-  const targetHeight = imageEl.naturalHeight - heightRangeEl.value;
-  const targetWidth = imageEl.naturalWidth - widthRangeEl.value;
-  const output = goCarve(src, targetHeight, targetWidth);
-  imageEl.src = `data:image/jpeg;base64,${output}`;
+  outputImageEl.style.maxHeight = `${inputImageEl.clientHeight}px`;
+  const src = inputImageEl.src.split(",")[1];
+  const targetHeight = inputImageEl.naturalHeight - heightRangeEl.value;
+  const targetWidth = inputImageEl.naturalWidth - widthRangeEl.value;
+  goCarve(src, targetHeight, targetWidth);
 };
 
 const onClickDownload = () => {
   const link = document.createElement("a");
-  link.setAttribute("href", imageEl.src);
+  link.setAttribute("href", outputImageEl.src);
   link.setAttribute("download", "resized.jpg");
   link.click();
 };
 
 const initialize = () =>
-  fetch("./assets/dali.jpeg")
+  fetch("https://random.imagecdn.app/650/350")
     .then((r) => r.arrayBuffer())
     .then((buffer) => {
       const arrayBuffer = new Uint8Array(buffer);
       setImgSrcFromBuffer(arrayBuffer);
+      document.body.style.opacity = 1;
     });
 
 const loadAndInitWA = (waURL) => {
