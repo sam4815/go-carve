@@ -13,7 +13,7 @@ const setImgSrcFromBuffer = (buffer) => {
   );
   inputImageEl.src = `data:image/jpeg;base64,${base64String}`;
   outputImageEl.src = `data:image/jpeg;base64,${base64String}`;
-  outputImageEl.style.height = "unset";
+  outputImageEl.style.maxHeight = "unset";
 };
 
 const onBufferLoad = (buffer) => {
@@ -75,7 +75,7 @@ const onClickDownload = () => {
 };
 
 const initialize = () =>
-  fetch("https://random.imagecdn.app/650/350")
+  fetch("https://random.imagecdn.app/650/450")
     .then((r) => r.arrayBuffer())
     .then((buffer) => {
       const arrayBuffer = new Uint8Array(buffer);
