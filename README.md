@@ -1,8 +1,7 @@
 ![deploy](https://github.com/sam4815/go-carve/actions/workflows/deploy.yaml/badge.svg)
-
 # go-carve
 
-<video width="100%" src="demo.mp4" autoplay loop></video>
+https://user-images.githubusercontent.com/32017929/179416668-179eb0e4-2520-4ed2-9451-cda44a4ccbb9.mp4
 
 Resize images using seam carving. [Try it out!](https://sam4815.github.io/go-carve)
 
