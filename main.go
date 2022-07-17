@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"image"
 	"log"
 	"math"
@@ -76,13 +75,6 @@ func (matrix *matrix[T]) RotateRight() {
 func (matrix *matrix[T]) RotateLeft() {
 	matrix.Transpose()
 	matrix.FlipVertical()
-}
-
-func setImSrc(base64String string) {
-	doc := js.Global().Get("document")
-	imageEl := doc.Call("getElementById", "output")
-
-	imageEl.Set("src", fmt.Sprintf("data:image/jpeg;base64,%s", base64String))
 }
 
 func generatePaddedGrayscale(src matrix[color.Color]) matrix[float64] {
@@ -299,9 +291,8 @@ func removeVerticalSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCos
 		seam := calculateSeam(costPaths)
 		removeSeam(seam, edgeCosts, imageMatrix)
 
-		if (i+1)%50 == 0 {
-			// log.Println(i+1, " seams removed")
-			setImSrc(encodeAsJPEGString(drawColorImage(imageMatrix)))
+		if (i+1)%25 == 0 {
+			js.Global().Call("setImageSource", encodeAsJPEGString(drawColorImage(imageMatrix)))
 		}
 	}
 }
@@ -335,7 +326,7 @@ func carve(this js.Value, inputs []js.Value) interface{} {
 	carvedImage := drawColorImage(&imageMatrix)
 	carvedImageBase64 := encodeAsJPEGString(carvedImage)
 
-	setImSrc(carvedImageBase64)
+	js.Global().Call("setImageSource", carvedImageBase64)
 	return carvedImageBase64
 }
 

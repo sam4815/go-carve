@@ -61,7 +61,10 @@ const onClickCarve = () => {
   const src = inputImageEl.src.split(",")[1];
   const targetHeight = inputImageEl.naturalHeight - heightRangeEl.value;
   const targetWidth = inputImageEl.naturalWidth - widthRangeEl.value;
-  goCarve(src, targetHeight, targetWidth);
+  worker.postMessage({
+    type: MESSAGE_TYPES.CARVE,
+    params: { src, targetHeight, targetWidth },
+  });
 };
 
 const onClickDownload = () => {
@@ -80,14 +83,14 @@ const initialize = () =>
       document.body.style.opacity = 1;
     });
 
-const loadAndInitWA = (waURL) => {
-  const go = new Go();
-  WebAssembly.instantiateStreaming(fetch(waURL), go.importObject).then(
-    async (result) => {
-      initialize();
-      await go.run(result.instance);
-    }
-  );
+const worker = new Worker("worker.js");
+
+worker.postMessage({ type: MESSAGE_TYPES.INIT });
+
+worker.onmessage = ({ data }) => {
+  if (data.type == MESSAGE_TYPES.SET_SOURCE) {
+    outputImageEl.src = `data:image/jpeg;base64,${data.src}`;
+  }
 };
 
-loadAndInitWA("main.wasm");
+initialize();
