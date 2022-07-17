@@ -17,65 +17,67 @@
     <link rel="stylesheet" href="seam.css" />
   </head>
   <body>
-    <div class="actions">
-      <button class="button" onclick="onClickCarve()">
-        <img class="icon" src="assets/scissors.png" />
-        <span class="button-text">Carve</span>
-      </button>
-      <button class="button" onclick="onClickDownload()">
-        <img class="icon" src="assets/download.png" />
-        <span class="button-text">Download</span>
-      </button>
-      <button class="button" onclick="initialize()">
-        <img class="icon" src="assets/random.png" />
-        <span class="button-text">Random</span>
-      </button>
-      <button
-        class="button upload-container"
-        onclick="document.getElementById('image-upload').click()"
-      >
-        <input
-          type="file"
-          accept="image/*"
-          id="image-upload"
-          onchange="readFile(event)"
-        />
-        <img class="icon" src="assets/upload.png" />
-        <span class="button-text">Upload</span>
-      </button>
-    </div>
-    <div class="images-container">
-      <div class="resize-container">
-        <div class="input-container">
-          <div id="overlay"></div>
-          <img onload="setRanges()" id="input" />
+    <div id="root">
+      <div class="actions">
+        <button class="button" onclick="onClickCarve()">
+          <img class="icon" src="assets/scissors.png" />
+          <span class="button-text">Carve</span>
+        </button>
+        <button class="button" onclick="onClickDownload()">
+          <img class="icon" src="assets/download.png" />
+          <span class="button-text">Download</span>
+        </button>
+        <button class="button" onclick="initialize()">
+          <img class="icon" src="assets/random.png" />
+          <span class="button-text">Random</span>
+        </button>
+        <button
+          class="button upload-container"
+          onclick="document.getElementById('image-upload').click()"
+        >
+          <input
+            type="file"
+            accept="image/*"
+            id="image-upload"
+            onchange="readFile(event)"
+          />
+          <img class="icon" src="assets/upload.png" />
+          <span class="button-text">Upload</span>
+        </button>
+      </div>
+      <div class="images-container">
+        <div class="resize-container">
+          <div class="input-container">
+            <div id="overlay"></div>
+            <img onload="setRanges()" id="input" />
+          </div>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            oninput="updateOverlay()"
+            class="slider"
+            id="height-range"
+            orient="vertical"
+          />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            oninput="updateOverlay()"
+            class="slider"
+            id="width-range"
+          />
         </div>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value="0"
-          oninput="updateOverlay()"
-          class="slider"
-          id="height-range"
-          orient="vertical"
-        />
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value="0"
-          oninput="updateOverlay()"
-          class="slider"
-          id="width-range"
-        />
+        <div class="output-container">
+          <img id="output" />
+        </div>
       </div>
-      <div class="output-container">
-        <img id="output" />
-      </div>
+      <script type="text/javascript" src="wasm_exec.js"></script>
+      <script type="text/javascript" src="message_types.js"></script>
+      <script type="text/javascript" src="seam.js"></script>
     </div>
-    <script type="text/javascript" src="wasm_exec.js"></script>
-    <script type="text/javascript" src="message_types.js"></script>
-    <script type="text/javascript" src="seam.js"></script>
   </body>
 </html>

@@ -2,10 +2,14 @@ body {
   color: #0f3c4b;
   background-color: #e5edf1;
   font-size: 18px;
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+}
+
+#root {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  font-family: "Roboto", sans-serif;
   margin: 20px;
   opacity: 0;
   transition: opacity 250ms ease-in;
