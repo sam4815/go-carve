@@ -201,6 +201,17 @@ func removeSeam(seam []int, costs *matrix[float64], colorImg *matrix[color.Color
 	costs.cols = costs.cols - 1
 }
 
+func paintSeam(seam []int, costs *matrix[float64]) {
+	max := 0.0
+	costs.ForEach(func(x int, y int) {
+		max = math.Max(max, costs.At(x, y))
+	})
+
+	for y := 0; y < costs.rows; y++ {
+		costs.Set(seam[y], y, max)
+	}
+}
+
 func drawGrayscaleImage(pixels matrix[float64]) *image.RGBA {
 	max := 0.0
 	pixels.ForEach(func(x int, y int) {
@@ -272,7 +283,10 @@ func detectEdges(this js.Value, inputs []js.Value) interface{} {
 	paddedGrayscale := generatePaddedGrayscale(imageMatrix)
 	edgeCosts := calculateEdgeCosts(paddedGrayscale)
 
-	return encodeAsJPEGString(drawGrayscaleImage(edgeCosts))
+	edgesImageBase64 := encodeAsJPEGString(drawGrayscaleImage(edgeCosts))
+
+	js.Global().Call("setImageSource", edgesImageBase64)
+	return edgesImageBase64
 }
 
 func calculatePaths(this js.Value, inputs []js.Value) interface{} {
@@ -282,7 +296,10 @@ func calculatePaths(this js.Value, inputs []js.Value) interface{} {
 	costPaths := createMatrix[float64](edgeCosts.rows, edgeCosts.cols)
 	calculateCostPaths(&edgeCosts, &costPaths)
 
-	return encodeAsJPEGString(drawGrayscaleImage(costPaths))
+	pathsImageBase64 := encodeAsJPEGString(drawGrayscaleImage(costPaths))
+
+	js.Global().Call("setImageSource", pathsImageBase64)
+	return pathsImageBase64
 }
 
 func removeVerticalSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCosts *matrix[float64], costPaths *matrix[float64]) {
@@ -291,7 +308,7 @@ func removeVerticalSeams(numSeams int, imageMatrix *matrix[color.Color], edgeCos
 		seam := calculateSeam(costPaths)
 		removeSeam(seam, edgeCosts, imageMatrix)
 
-		if (i+1)%25 == 0 {
+		if (i+1)%3 == 0 {
 			js.Global().Call("setImageSource", encodeAsJPEGString(drawColorImage(imageMatrix)))
 		}
 	}
