@@ -100,7 +100,7 @@ body {
 }
 
 /* Mobile */
-@media (max-width: 640px) {
+@media (max-width: 780px) {
   body {
     flex-direction: column-reverse;
   }
@@ -116,5 +116,9 @@ body {
 
   .images-container {
     display: block;
+  }
+
+  .output-container {
+    padding-right: 25px;
   }
 }
