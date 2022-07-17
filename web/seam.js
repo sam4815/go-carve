@@ -1,3 +1,4 @@
+const rootEl = document.getElementById("root");
 const widthRangeEl = document.getElementById("width-range");
 const heightRangeEl = document.getElementById("height-range");
 const inputImageEl = document.getElementById("input");
@@ -80,7 +81,7 @@ const initialize = () =>
     .then((buffer) => {
       const arrayBuffer = new Uint8Array(buffer);
       setImgSrcFromBuffer(arrayBuffer);
-      document.body.style.opacity = 1;
+      rootEl.style.opacity = 1;
     });
 
 const worker = new Worker("worker.js");
