@@ -1,4 +1,5 @@
 ![deploy](https://github.com/sam4815/go-carve/actions/workflows/deploy.yaml/badge.svg)
+
 # go-carve
 
 https://user-images.githubusercontent.com/32017929/179416668-179eb0e4-2520-4ed2-9451-cda44a4ccbb9.mp4
@@ -21,17 +22,17 @@ For a single line of pixels, $[x[i-1], x[i], x[i+1]]$, we can multiply it elemen
 
 Using the 2-dimensional Sobel operator, we can move across each pixel and calculate the magnitude of its gradient. Using the image shown in the demo above, the edges can be visualized as so:
 
-<img src="edges.jpg" />
+<img src="web/assets/edges.jpg" />
 
 Now we just need to calculate a path from the top of the image to the bottom of the image that avoids as many edges as possible. We can begin by defining the cost of any single pixel as the minimum cost path from that pixel to the bottom of the image. So the bottom row of pixels is simply equal to their current gradient value, and then the cost of each pixel in the above row is equal to its current gradient value _plus_ the cheapest pixel of the 3 directly beneath it. This results in the following visualization:
 
-<img src="paths.jpg" />
+<img src="web/assets/paths.jpg" />
 
 Observe the costliest pixels (i.e. the brightest pixels) are those that begin above an object. At those pixels, there is no way of descending to the bottom of the image without passing through an edge.
 
 The final part of this algorithm is to simply pick the cheapest pixel in the top row and descend by picking the cheapest pixel directly beneath it. For this image, we find the following path:
 
-<img src="path.jpg" />
+<img src="web/assets/path.jpg" />
 
 We remove the path and continue calculating and removing the cheapest paths until the image is the desired width. For removing horizontal paths, we can just rotate the image by 90 degrees and perform the same path-finding algorithm.
 
