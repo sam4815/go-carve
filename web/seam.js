@@ -13,7 +13,7 @@ const setImgSrcFromBuffer = (buffer) => {
   );
   inputImageEl.src = `data:image/jpeg;base64,${base64String}`;
   outputImageEl.src = `data:image/jpeg;base64,${base64String}`;
-  outputImageEl.style.height = "unset";
+  outputImageEl.style.maxHeight = "unset";
 };
 
 const onBufferLoad = (buffer) => {
