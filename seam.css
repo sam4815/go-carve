@@ -105,7 +105,7 @@ body {
 
 /* Mobile */
 @media (max-width: 780px) {
-  body {
+  #root {
     flex-direction: column-reverse;
   }
 
