@@ -76,7 +76,7 @@ const onClickDownload = () => {
 };
 
 const initialize = () =>
-  fetch("https://random.imagecdn.app/650/450")
+  fetch("https://picsum.photos/650/450")
     .then((r) => r.arrayBuffer())
     .then((buffer) => {
       const arrayBuffer = new Uint8Array(buffer);
